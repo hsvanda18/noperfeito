@@ -29,6 +29,10 @@ h1,h2,h3{font-family:"Red Hat Display",system-ui,sans-serif;font-weight:800;lett
 .nav a,.nav button{font-weight:600;font-size:15px;padding:10px 14px;border-radius:10px;border-bottom:2px solid transparent;transition:background .2s}
 .nav a:hover,.nav button:hover{background:#e9eef6}
 .nav .cur{border-bottom-color:var(--cy);border-radius:10px 10px 0 0}
+.hdr{position:relative}
+.mbtn{display:none;width:44px;height:44px;border-radius:12px;place-items:center;color:var(--navy);transition:background .2s}
+.mbtn:hover{background:#e9eef6}
+.mbtn .ico{width:24px;height:24px}
 
 /* hero */
 .hero{position:relative;display:grid;align-items:center;background:linear-gradient(100deg,#fff,#e9eefb);border-radius:24px;overflow:hidden;min-height:440px}
@@ -133,7 +137,12 @@ h1,h2,h3{font-family:"Red Hat Display",system-ui,sans-serif;font-weight:800;lett
 @media (max-width:500px){.grid{grid-template-columns:repeat(2,1fr);gap:12px}}
 @media (max-width:760px){
   .page{padding:0 14px 36px}
-  .hdr{height:60px}.logo{font-size:21px}.nav .opt{display:none}
+  .hdr{height:60px}.logo{font-size:21px}
+  .mbtn{display:grid}
+  .nav{display:none;position:absolute;top:calc(100% - 4px);left:0;right:0;z-index:50;flex-direction:column;gap:2px;padding:8px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px -16px rgba(12,31,69,.35)}
+  .hdr.open .nav{display:flex}
+  .nav a,.nav button{text-align:left;padding:14px 16px;font-size:16px}
+  .nav .cur{border-bottom-color:transparent;border-radius:10px;background:var(--cyS)}
   .band{padding:22px 20px}.band .pill{width:100%;justify-content:center}
   .btn{font-size:15px}
   .hero{min-height:0;background:#fff}
@@ -391,19 +400,26 @@ let DONE={};
 try{DONE=JSON.parse(localStorage.getItem('no-perfeito-done')||'{}')}catch(e){}
 function saveDone(){try{localStorage.setItem('no-perfeito-done',JSON.stringify(DONE))}catch(e){}}
 const app=document.getElementById('app');
-const ICO={left:'M19 12H5M11 6l-6 6 6 6',right:'M5 12h14M13 6l6 6-6 6',replay:'M4 12a8 8 0 1 0 2.6-5.9M4 4v5h5',check:'M4 12.5l5 5L20 6.5',list:'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01'};
+const ICO={left:'M19 12H5M11 6l-6 6 6 6',right:'M5 12h14M13 6l6 6-6 6',replay:'M4 12a8 8 0 1 0 2.6-5.9M4 4v5h5',check:'M4 12.5l5 5L20 6.5',list:'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',menu:'M4 7h16M4 12h16M4 17h16',close:'M6 6l12 12M18 6L6 18'};
 const ico=n=>n==='play'?`<svg class="ico fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>`:`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICO[n]}"/></svg>`;
 const dots=n=>`<span class="dots">${[1,2,3,4].map(i=>`<i class="${i<=n?'on':''}"></i>`).join('')}</span>`;
 const setPal=i=>{C.front=PAL[i][0];C.back=PAL[i][1]};
 const logoSVG=`<svg viewBox="0 0 22 34" aria-hidden="true"><path d="M5 1h12l-2.5 7h-7z" fill="#0c1f45"/><path d="M7.5 9h7L18 26l-7 7-7-7z" fill="#0c1f45"/><path d="M11 12v18" stroke="#16c5d2" stroke-width="2" stroke-linecap="round"/></svg>`;
 function header(cur){return `<header class="hdr">
   <button class="logo" id="logo" aria-label="Nó Perfeito, início">${logoSVG}<div>Nó<span>Perfeito</span></div></button>
-  <nav class="nav"><button id="nHome" class="${cur==='home'?'cur':''}">Início</button><a href="#nos" class="opt" id="nNos">Nós de gravata</a><a href="#dicas" class="opt" id="nDicas">Dicas</a></nav>
+  <button class="mbtn" id="mbtn" aria-label="Abrir menu" aria-expanded="false" aria-controls="mainnav">${ico('menu')}</button>
+  <nav class="nav" id="mainnav"><button id="nHome" class="${cur==='home'?'cur':''}">Início</button><a href="#nos" class="opt" id="nNos">Nós de gravata</a><a href="#dicas" class="opt" id="nDicas">Dicas</a></nav>
 </header>`}
 function bindHeader(){
   const home=()=>{S.view='home';render();window.scrollTo(0,0)};
+  const hdr=document.querySelector('.hdr'), mb=document.getElementById('mbtn');
+  const setOpen=o=>{hdr.classList.toggle('open',o);mb.setAttribute('aria-expanded',o);mb.setAttribute('aria-label',o?'Fechar menu':'Abrir menu');mb.innerHTML=ico(o?'close':'menu')};
+  mb.onclick=e=>{e.stopPropagation();setOpen(!hdr.classList.contains('open'))};
+  document.getElementById('mainnav').addEventListener('click',()=>setOpen(false));
+  document.onclick=e=>{if(!hdr.contains(e.target))setOpen(false)};
+  document.onkeydown=e=>{if(e.key==='Escape')setOpen(false)};
   document.getElementById('logo').onclick=home; document.getElementById('nHome').onclick=home;
-  if(S.view!=='home') ['nNos','nDicas'].forEach(id=>document.getElementById(id).onclick=e=>{e.preventDefault();const h=e.currentTarget.getAttribute('href').slice(1);S.view='home';render();const t=document.getElementById(h);if(t)t.scrollIntoView()});
+  ['nNos','nDicas'].forEach(id=>document.getElementById(id).onclick=e=>{e.preventDefault();const h=e.currentTarget.getAttribute('href').slice(1);if(S.view!=='home'){S.view='home';render()}setOpen(false);const t=document.getElementById(h);if(t)t.scrollIntoView({behavior:'smooth'})});
 }
 function renderHome(){
   animToken++; S.all=false;
